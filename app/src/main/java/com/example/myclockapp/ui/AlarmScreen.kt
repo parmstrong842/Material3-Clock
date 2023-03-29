@@ -1,7 +1,10 @@
 package com.example.myclockapp.ui
 
 
-import android.util.Log
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,18 +19,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myclockapp.AppViewModelProvider
+import com.example.myclockapp.MyReceiver
 import com.example.myclockapp.model.Alarm
+import java.util.*
+
 
 @Composable
 fun AlarmScreen(
     onNewAlarmClick: () -> Unit,
-    editAlarmClick: (Alarm) -> Unit,
-    alarms: List<Alarm>,
+    editAlarmClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
+    viewModel: AlarmViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val alarms = viewModel.fetchAlarms()
+
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -87,16 +97,16 @@ fun AlarmScreen(
 @Composable
 private fun AlarmCard(
     alarmItem: AlarmItem,
-    editAlarmClick: (Alarm) -> Unit
+    editAlarmClick: (Int) -> Unit
 ) {
     var checked by remember { mutableStateOf(false)}
-
+    val context = LocalContext.current
     val color = if (checked) Color.Black else Color.Gray
 
     Card(
         modifier = Modifier
             .clickable {
-                editAlarmClick(alarmItem.alarm)
+                editAlarmClick(alarmItem.alarm.id)
             }
     ) {
         Box(
@@ -110,7 +120,9 @@ private fun AlarmCard(
                 Text(
                     text = alarmItem.time,
                     style = MaterialTheme.typography.displayMedium,
-                    modifier = Modifier.padding(start = 16.dp).alignByBaseline(),
+                    modifier = Modifier
+                        .padding(start = 16.dp)
+                        .alignByBaseline(),
                     color = color
                 )
                 Text(
@@ -128,7 +140,10 @@ private fun AlarmCard(
                 )
                 Switch(
                     checked = checked,
-                    onCheckedChange = { checked = !checked },
+                    onCheckedChange = {
+                        checked = !checked
+                        onCheckChanged(context, checked)
+                    },
                     modifier = Modifier
                         .padding(end = 16.dp)
                 )
@@ -137,6 +152,28 @@ private fun AlarmCard(
     }
 }
 
+private fun onCheckChanged(context: Context, checked: Boolean) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+
+    if (checked) {
+        val intent = Intent(context, MyReceiver::class.java)
+        val alarmPendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+        val calendar: Calendar = Calendar.getInstance()
+        calendar.timeInMillis = System.currentTimeMillis()
+
+        alarmManager.setExact(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis + 1000 * 5,
+            alarmPendingIntent
+        )
+    } else {
+        val cancelIntent = Intent(context, MyReceiver::class.java)
+        val cancelPendingIntent = PendingIntent.getBroadcast(context, 0, cancelIntent, PendingIntent.FLAG_IMMUTABLE)
+        alarmManager.cancel(cancelPendingIntent)
+    }
+}
 
 data class AlarmItem(
     val time: String = "6:00",
@@ -144,14 +181,3 @@ data class AlarmItem(
     val date: String = "Tue, Nov 15",
     val alarm: Alarm
 )
-
-@Preview(widthDp = 393, heightDp = 808)
-@Composable
-fun AlarmScreenPreview() {
-    AlarmScreen(
-        {},
-        {},
-        emptyList(),
-        innerPadding = PaddingValues(0.dp)
-    )
-}

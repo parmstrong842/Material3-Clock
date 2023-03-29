@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <application
         android:name=".MyClockApplication"
         android:allowBackup="true"
@@ -13,6 +15,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyClockApp"
         tools:targetApi="31">
+
+        <receiver
+            android:name=".MyReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

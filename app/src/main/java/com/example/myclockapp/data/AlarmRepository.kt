@@ -8,13 +8,24 @@ class AlarmRepository {
         return AlarmDummyData.fakeAlarmList
     }
 
-    fun addAlarm(alarm: Alarm) {
+    fun fetchAlarm(id: Int): Alarm {
+        return if (id == -1)
+            Alarm()
+        else
+            AlarmDummyData.fakeAlarmList[id]
+    }
+
+    fun insertAlarm(alarm: Alarm) {
         AlarmDummyData.fakeAlarmList.add(alarm)
+    }
+
+    fun updateAlarm(id: Int, alarm: Alarm) {
+        AlarmDummyData.fakeAlarmList[id] = alarm
     }
 }
 
 object AlarmDummyData {
-    var id = 1;
+    var id = 0;
     val fakeAlarmList = MutableList(3) {
         Alarm( id++,"6:00AM", true, true, true, true, true, true, true, "test alarm")
     }

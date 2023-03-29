@@ -1,31 +1,31 @@
 package com.example.myclockapp.ui
 
 import androidx.lifecycle.ViewModel
-import com.example.myclockapp.data.BottomBarState
+import com.example.myclockapp.data.StartScreenState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 data class MainContentUiState(
-    val hideBottomBar: Boolean = false
+    val bottomBarState: Boolean = true
 )
 
-class MainContentViewModel(private val bottomBarState: BottomBarState) : ViewModel() {
+class MainContentViewModel(private val startScreenState: StartScreenState) : ViewModel() {
     private val _uiState = MutableStateFlow(MainContentUiState())
     val uiState = _uiState.asStateFlow()
 
-    var startScreen = bottomBarState.getState()
+    var startScreen = startScreenState.getState()
         private set
 
-    fun updateBottomBarState(newState: Int) {
-        bottomBarState.setState(newState)
+    fun updateStartScreenState(newState: Int) {
+        startScreenState.setState(newState)
         startScreen = newState
     }
 
-    fun hideBottomBar(b: Boolean) {
+    fun bottomBarState(b: Boolean) {
         _uiState.update {
             it.copy(
-                hideBottomBar = b
+                bottomBarState = b
             )
         }
     }

@@ -1,7 +1,6 @@
 package com.example.myclockapp.ui
 
 import android.widget.TimePicker
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -19,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myclockapp.AppViewModelProvider
 import com.example.myclockapp.data.AlarmDummyData
 import com.example.myclockapp.model.Alarm
 import java.text.SimpleDateFormat
@@ -29,40 +30,34 @@ import java.util.*
 
 @Composable
 fun NewAlarmScreen(
-    innerPadding: PaddingValues,
     onCancelClicked: () -> Unit,
-    onSaveClicked: (Alarm) -> Unit,
-    handleBackButton: () -> Unit,
-    currentAlarm: Alarm,
+    onSaveClicked: () -> Unit,
+    viewModel: NewAlarmViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    //BackHandler(onBack = handleBackButton)
+    val uiState by viewModel.uiState.collectAsState()
 
-    Column(Modifier.padding(innerPadding)) {
+    Column {
+        val sunSelected = uiState.sunSelected
+        val monSelected = uiState.monSelected
+        val tueSelected = uiState.tueSelected
+        val wedSelected = uiState.wedSelected
+        val thuSelected = uiState.thuSelected
+        val friSelected = uiState.friSelected
+        val satSelected = uiState.satSelected
 
-        var sunSelected by remember { mutableStateOf(currentAlarm.sun) }
-        var monSelected by remember { mutableStateOf(currentAlarm.mon) }
-        var tueSelected by remember { mutableStateOf(currentAlarm.tue) }
-        var wedSelected by remember { mutableStateOf(currentAlarm.wed) }
-        var thuSelected by remember { mutableStateOf(currentAlarm.thu) }
-        var friSelected by remember { mutableStateOf(currentAlarm.fri) }
-        var satSelected by remember { mutableStateOf(currentAlarm.sat) }
+        val time = uiState.time
 
-        var time by remember { mutableStateOf("")}
-
-        // Adds view to Compose
         AndroidView(
-            modifier = Modifier.fillMaxWidth(), // Occupy the max size in the Compose UI tree
+            modifier = Modifier.fillMaxWidth(),
             factory = { context ->
-                // Creates view
                 TimePicker(context)
             },
             update = { view ->
-                val temp = get24Time(currentAlarm.time)
+                val temp = get24Time(uiState.time)
                 view.hour = temp.substring(0, 2).toInt()
                 view.minute = temp.substring(3).toInt()
-                time = "${view.hour}:${view.minute}"
                 view.setOnTimeChangedListener { _, mHour, mMinute ->
-                    time = "$mHour:$mMinute"
+                    viewModel.updateTime(get12Time("$mHour:$mMinute"))
                 }
             }
         )
@@ -109,19 +104,18 @@ fun NewAlarmScreen(
             }
 
             Row (horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()){
-                DayItem(text = "S", selected = sunSelected) { sunSelected = !sunSelected }
-                DayItem(text = "M", selected = monSelected) { monSelected = !monSelected }
-                DayItem(text = "T", selected = tueSelected) { tueSelected = !tueSelected }
-                DayItem(text = "W", selected = wedSelected) { wedSelected = !wedSelected }
-                DayItem(text = "T", selected = thuSelected) { thuSelected = !thuSelected }
-                DayItem(text = "F", selected = friSelected) { friSelected = !friSelected }
-                DayItem(text = "S", selected = satSelected) { satSelected = !satSelected }
+                DayItem(text = "S", selected = sunSelected) { viewModel.updateDaySelected(0) }
+                DayItem(text = "M", selected = monSelected) { viewModel.updateDaySelected(1) }
+                DayItem(text = "T", selected = tueSelected) { viewModel.updateDaySelected(2) }
+                DayItem(text = "W", selected = wedSelected) { viewModel.updateDaySelected(3) }
+                DayItem(text = "T", selected = thuSelected) { viewModel.updateDaySelected(4) }
+                DayItem(text = "F", selected = friSelected) { viewModel.updateDaySelected(5) }
+                DayItem(text = "S", selected = satSelected) { viewModel.updateDaySelected(6) }
             }
             Spacer(Modifier.padding(16.dp))
-            var textFieldValue by remember { mutableStateOf("")}
             TextField(
-                value = textFieldValue,
-                onValueChange = { textFieldValue = it },
+                value = uiState.name,
+                onValueChange = { viewModel.updateName(it) },
                 placeholder = { Text("Alarm name") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -154,7 +148,12 @@ fun NewAlarmScreen(
             }
             TextButton(
                 onClick = {
-                    onSaveClicked(newAlarm(time, sunSelected, monSelected, tueSelected, wedSelected, thuSelected, friSelected, satSelected))
+                    if (viewModel.isNewAlarm) {
+                        viewModel.insertAlarm()
+                    } else {
+                        viewModel.updateAlarm()
+                    }
+                    onSaveClicked()
                 },
                 Modifier.width(128.dp)
             ) {
@@ -162,17 +161,6 @@ fun NewAlarmScreen(
             }
         }
     }
-}
-
-private fun newAlarm(time: String, sunSelected: Boolean, monSelected: Boolean, tueSelected: Boolean, wedSelected: Boolean, thuSelected: Boolean, friSelected: Boolean, satSelected: Boolean): Alarm {
-    val sDF24 = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val sDF12 = SimpleDateFormat("hh:mma", Locale.getDefault())
-    val dT24: Date = sDF24.parse(time) as Date
-    var newTime = sDF12.format(dT24)
-    if(newTime[0] == '0')
-        newTime = newTime.substring(1)
-
-    return Alarm(AlarmDummyData.id++, newTime, sunSelected, monSelected, tueSelected, wedSelected, thuSelected, friSelected, satSelected)
 }
 
 private fun get24Time(time: String): String {
@@ -184,6 +172,12 @@ private fun get24Time(time: String): String {
     return sDF24.format(dT12)
 }
 
+private fun get12Time(time: String): String {
+    val sDF24 = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val sDF12 = SimpleDateFormat("h:mma", Locale.getDefault())
+    val dT24: Date = sDF24.parse(time) as Date
+    return sDF12.format(dT24)
+}
 
 @Composable
 private fun DayItem(

@@ -1,5 +1,9 @@
 package com.example.myclockapp.ui
 
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Alarm
@@ -12,10 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.myclockapp.AppViewModelProvider
 import com.example.myclockapp.IconResource
 import com.example.myclockapp.R
@@ -28,21 +34,24 @@ enum class Screen {
 
 @Composable
 fun MainContent() {
-    val navController = rememberNavController()
-
     val mainViewModel: MainContentViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val mainUiState by mainViewModel.uiState.collectAsState()
 
-    val alarmViewModel: AlarmViewModel = viewModel()
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    when (navBackStackEntry?.destination?.route) {
+        "${Screen.NewAlarm.name}/{alarmId}" -> mainViewModel.bottomBarState(false)
+        else -> { mainViewModel.bottomBarState(true) }
+    }
 
     Scaffold(
         bottomBar = {
-            if (!mainUiState.hideBottomBar) {
-                MyBottomBar(
-                    navController = navController,
-                    updateBottomBarState = { mainViewModel.updateBottomBarState(it) },
-                )
-            }
+            MyBottomBar(
+                navController = navController,
+                updateStartScreenState = { mainViewModel.updateStartScreenState(it) },
+                bottomBarState = mainUiState.bottomBarState
+            )
         }
     ) { innerPadding ->
         val startScreen = when(mainViewModel.startScreen) {
@@ -57,34 +66,27 @@ fun MainContent() {
             composable(BottomNavigationScreen.Alarm.route) {
                 AlarmScreen(
                     onNewAlarmClick = {
-                        mainViewModel.hideBottomBar(true)
-                        navController.navigate(Screen.NewAlarm.name)
+                        navController.navigate("${Screen.NewAlarm.name}/-1")
                     },
                     editAlarmClick = {
-                        mainViewModel.hideBottomBar(true)
-                        alarmViewModel.currentAlarm = it
-                        navController.navigate(Screen.NewAlarm.name)
+                        navController.navigate("${Screen.NewAlarm.name}/$it")
                     },
-                    alarms = alarmViewModel.fetchAlarms(),
                     innerPadding = innerPadding
                 )
             }
-            composable(Screen.NewAlarm.name) {
+            composable(
+                route = "${Screen.NewAlarm.name}/{alarmId}",
+                arguments = listOf(navArgument("alarmId") {
+                    type = NavType.IntType
+                })
+            ) {
                 NewAlarmScreen(
-                    innerPadding = innerPadding,
                     onCancelClicked = {
-                        mainViewModel.hideBottomBar(false)
                         navController.popBackStack()
                     },
                     onSaveClicked = {
-                        mainViewModel.hideBottomBar(false)
-                        alarmViewModel.addAlarm(it)
                         navController.popBackStack()
                     },
-                    handleBackButton = {
-                        mainViewModel.hideBottomBar(false)
-                    },
-                    currentAlarm = alarmViewModel.currentAlarm
                 )
             }
             composable(BottomNavigationScreen.WorldClock.route) {
@@ -103,7 +105,8 @@ fun MainContent() {
 @Composable
 private fun MyBottomBar(
     navController: NavController,
-    updateBottomBarState: (Int) -> Unit,
+    updateStartScreenState: (Int) -> Unit,
+    bottomBarState: Boolean,
 ) {
     val selectedStyle = MaterialTheme.typography.labelMedium.copy(
         color = Color.Black,
@@ -117,36 +120,41 @@ private fun MyBottomBar(
         BottomNavigationScreen.Timer
     )
 
-    NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
-        items.forEachIndexed { index, screen ->
-            val selected = currentDestination?.route == screen.route
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        screen.icon.asPainterResource(filled = selected),
-                        contentDescription = screen.route
-                    )
-                },
-                label = {
-                    Text(
-                        text = screen.route,
-                        style = if (selected) selectedStyle else MaterialTheme.typography.labelMedium
-                    )
-                },
-                selected = selected,
-                onClick = {
-                    if (navController.currentDestination?.route != screen.route) {
-                        navController.navigate(screen.route) {
-                            popUpTo(navController.graph.id) {
-                                inclusive = true
+    AnimatedVisibility(
+        visible = bottomBarState,
+        enter = slideInVertically(initialOffsetY = { it }),
+        exit = slideOutVertically(targetOffsetY = { it }),
+    ) {
+        NavigationBar {
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            items.forEachIndexed { index, screen ->
+                val selected = navBackStackEntry?.destination?.route == screen.route
+                NavigationBarItem(
+                    icon = {
+                        Icon(
+                            screen.icon.asPainterResource(filled = selected),
+                            contentDescription = screen.route
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = screen.route,
+                            style = if (selected) selectedStyle else MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    selected = selected,
+                    onClick = {
+                        if (navController.currentDestination?.route != screen.route) {
+                            navController.navigate(screen.route) {
+                                popUpTo(navController.graph.id) {
+                                    inclusive = true
+                                }
                             }
+                            updateStartScreenState(index)
                         }
-                        updateBottomBarState(index)
                     }
-                }
-            )
+                )
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ package com.example.myclockapp.data
 import android.content.Context
 import android.content.SharedPreferences
 
-class BottomBarState(context: Context) {
+class StartScreenState(context: Context) {
     private val prefsFileName = "com.example.myclockapp.data.STATE"
     private val stateKey = "com.example.myclockapp.data.KEY"
 

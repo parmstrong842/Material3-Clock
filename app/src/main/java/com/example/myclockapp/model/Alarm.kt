@@ -5,7 +5,7 @@ package com.example.myclockapp.model
 // alarm name
 
 data class Alarm(
-    val id: Int = 0,
+    val id: Int = -1,
     val time: String = "6:00AM",
     val sun: Boolean = false,
     val mon: Boolean = false,

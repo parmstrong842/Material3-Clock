@@ -1,12 +1,14 @@
 package com.example.myclockapp
 
 import android.app.Application
-import com.example.myclockapp.data.BottomBarState
+import com.example.myclockapp.data.AppContainer
+import com.example.myclockapp.data.AppDataContainer
+import com.example.myclockapp.data.StartScreenState
 
 class MyClockApplication : Application() {
-    lateinit var bottomBarState: BottomBarState
+    lateinit var container: AppContainer
     override fun onCreate() {
         super.onCreate()
-        bottomBarState = BottomBarState(this)
+        container = AppDataContainer(this)
     }
 }

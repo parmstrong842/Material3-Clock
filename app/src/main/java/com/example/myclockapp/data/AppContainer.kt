@@ -9,7 +9,7 @@ interface AppContainer {
 
 class AppDataContainer(private val context: Context) : AppContainer {
     override val alarmRepository: AlarmRepository by lazy {
-        AlarmRepository()
+        AlarmRepository(AlarmDatabase.getDatabase(context).alarmDao())
     }
     override val startScreenState: StartScreenState by lazy {
         StartScreenState(context)

@@ -5,6 +5,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,9 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myclockapp.AlarmScheduler
 import com.example.myclockapp.AppViewModelProvider
 import com.example.myclockapp.MyReceiver
 import com.example.myclockapp.model.Alarm
+import kotlinx.coroutines.launch
 import java.util.*
 
 
@@ -36,7 +39,8 @@ fun AlarmScreen(
     innerPadding: PaddingValues,
     viewModel: AlarmViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val alarms = viewModel.fetchAlarms()
+
+    val uiState by viewModel.uiState.collectAsState()
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -78,7 +82,7 @@ fun AlarmScreen(
             }
         }
         val list: MutableList<AlarmItem> = mutableListOf()
-        alarms.forEach {
+        uiState.alarms.forEach {
             list.add(AlarmItem(it.time.substring(0..it.time.length-3), alarm = it))
         }
         LazyColumn(
@@ -88,7 +92,11 @@ fun AlarmScreen(
                 .clip(RoundedCornerShape(16.dp))
         ) {
             items(list) {
-                AlarmCard(alarmItem = it, editAlarmClick)
+                AlarmCard(
+                    alarmItem = it,
+                    editAlarmClick = editAlarmClick,
+                    updateAlarm = { alarm -> viewModel.updateAlarm(alarm) }
+                )
             }
         }
     }
@@ -97,9 +105,10 @@ fun AlarmScreen(
 @Composable
 private fun AlarmCard(
     alarmItem: AlarmItem,
-    editAlarmClick: (Int) -> Unit
+    editAlarmClick: (Int) -> Unit,
+    updateAlarm: (Alarm) -> Unit
 ) {
-    var checked by remember { mutableStateOf(false)}
+    val checked = alarmItem.alarm.enabled
     val context = LocalContext.current
     val color = if (checked) Color.Black else Color.Gray
 
@@ -141,8 +150,7 @@ private fun AlarmCard(
                 Switch(
                     checked = checked,
                     onCheckedChange = {
-                        checked = !checked
-                        onCheckChanged(context, checked)
+                        onCheckChanged(context, it, alarmItem.alarm, updateAlarm)
                     },
                     modifier = Modifier
                         .padding(end = 16.dp)
@@ -152,32 +160,24 @@ private fun AlarmCard(
     }
 }
 
-private fun onCheckChanged(context: Context, checked: Boolean) {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-
+private fun onCheckChanged(
+    context: Context,
+    checked: Boolean,
+    alarm: Alarm,
+    updateAlarm: (Alarm) -> Unit
+) {
     if (checked) {
-        val intent = Intent(context, MyReceiver::class.java)
-        val alarmPendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        val calendar: Calendar = Calendar.getInstance()
-        calendar.timeInMillis = System.currentTimeMillis()
-
-        alarmManager.setExact(
-            AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis + 1000 * 5,
-            alarmPendingIntent
-        )
+        updateAlarm(alarm.copy(enabled = true))
+        AlarmScheduler.schedule(context, alarm)
     } else {
-        val cancelIntent = Intent(context, MyReceiver::class.java)
-        val cancelPendingIntent = PendingIntent.getBroadcast(context, 0, cancelIntent, PendingIntent.FLAG_IMMUTABLE)
-        alarmManager.cancel(cancelPendingIntent)
+        updateAlarm(alarm.copy(enabled = false))
+        AlarmScheduler.unschedule(context, alarm)
     }
 }
 
 data class AlarmItem(
     val time: String = "6:00",
     val period: String = "AM",
-    val date: String = "Tue, Nov 15",
+    val date: String = "date placeholder",
     val alarm: Alarm
 )

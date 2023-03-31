@@ -16,14 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myclockapp.AppViewModelProvider
-import com.example.myclockapp.data.AlarmDummyData
-import com.example.myclockapp.model.Alarm
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -35,6 +35,8 @@ fun NewAlarmScreen(
     viewModel: NewAlarmViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    val context = LocalContext.current
 
     Column {
         val sunSelected = uiState.sunSelected
@@ -54,10 +56,14 @@ fun NewAlarmScreen(
             },
             update = { view ->
                 val temp = get24Time(uiState.time)
-                view.hour = temp.substring(0, 2).toInt()
-                view.minute = temp.substring(3).toInt()
+                val hour = temp.substring(0, 2).toInt()
+                val minute = temp.substring(3).toInt()
+                view.hour = hour
+                view.minute = minute
+                viewModel.updateHourAndMinute(hour, minute)
                 view.setOnTimeChangedListener { _, mHour, mMinute ->
                     viewModel.updateTime(get12Time("$mHour:$mMinute"))
+                    viewModel.updateHourAndMinute(mHour, mMinute)
                 }
             }
         )
@@ -74,10 +80,19 @@ fun NewAlarmScreen(
             if(sunSelected && monSelected && tueSelected && wedSelected && thuSelected && friSelected && satSelected) {
                 text += "Every day"
             } else if (!sunSelected && !monSelected && !tueSelected && !wedSelected && !thuSelected && !friSelected && !satSelected) {
-                val current = LocalDateTime.now().plusDays(1)
+                val current = LocalDateTime.now()
+                var day = "Today"
+
+                val now = LocalTime.now()
+                val clock = LocalTime.of(viewModel.mHour, viewModel.mMinute)
+                if (now.isAfter(clock)) {
+                    current.plusDays(1)
+                    day = "Tomorrow"
+                }
+
                 val formatter = DateTimeFormatter.ofPattern("E, MMM d")
                 val formatted = current.format(formatter)
-                text += "Tomorrow-$formatted"
+                text += "$day-$formatted"
             } else {
                 text += "Every "
                 if(sunSelected) { text += "Sun" }
@@ -149,9 +164,9 @@ fun NewAlarmScreen(
             TextButton(
                 onClick = {
                     if (viewModel.isNewAlarm) {
-                        viewModel.insertAlarm()
+                        viewModel.insertAlarm(context)
                     } else {
-                        viewModel.updateAlarm()
+                        viewModel.updateAlarm(context)
                     }
                     onSaveClicked()
                 },
@@ -185,7 +200,7 @@ private fun DayItem(
     selected: Boolean,
     toggleSelection: () -> Unit
 ) {
-    val modifier = Modifier.width(24.dp)
+    val modifier = Modifier.width(30.dp)
 
     TextButton(
         onClick = toggleSelection,

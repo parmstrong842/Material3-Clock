@@ -1,34 +1,18 @@
 package com.example.myclockapp.data
 
 import com.example.myclockapp.model.Alarm
+import kotlinx.coroutines.flow.Flow
 
-class AlarmRepository {
+class AlarmRepository(private val alarmDao: AlarmDao) {
+    fun getAllItems(): Flow<List<Alarm>> = alarmDao.getAllItems()
 
-    fun fetchAlarms(): List<Alarm> {
-        return AlarmDummyData.fakeAlarmList
-    }
+    suspend fun getItem(id: Int): Alarm = alarmDao.getItem(id)
 
-    fun fetchAlarm(id: Int): Alarm {
-        return if (id == -1)
-            Alarm()
-        else
-            AlarmDummyData.fakeAlarmList[id]
-    }
+    suspend fun insertItem(item: Alarm) = alarmDao.insert(item)
 
-    fun insertAlarm(alarm: Alarm) {
-        AlarmDummyData.fakeAlarmList.add(alarm)
-    }
+    suspend fun deleteItem(item: Alarm) = alarmDao.delete(item)
 
-    fun updateAlarm(id: Int, alarm: Alarm) {
-        AlarmDummyData.fakeAlarmList[id] = alarm
-    }
-}
-
-object AlarmDummyData {
-    var id = 0;
-    val fakeAlarmList = MutableList(3) {
-        Alarm( id++,"6:00AM", true, true, true, true, true, true, true, "test alarm")
-    }
+    suspend fun updateItem(item: Alarm) = alarmDao.update(item)
 }
 
 

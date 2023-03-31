@@ -1,12 +1,17 @@
 package com.example.myclockapp.model
 
-// time - hour, minutes, am/pm
-// days of week
-// alarm name
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+
+@Entity(tableName = "alarms")
 data class Alarm(
-    val id: Int = -1,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val enabled: Boolean = false,
     val time: String = "6:00AM",
+    val hour: Int = 0,
+    val minute: Int = 0,
     val sun: Boolean = false,
     val mon: Boolean = false,
     val tue: Boolean = false,

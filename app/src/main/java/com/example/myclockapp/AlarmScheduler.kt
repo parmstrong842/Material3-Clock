@@ -14,7 +14,7 @@ object AlarmScheduler {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(context, MyReceiver::class.java).apply {
-            action = alarm.id.toString()
+            action = alarm.id
         }
         val alarmPendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
@@ -33,7 +33,7 @@ object AlarmScheduler {
 
         alarmManager.setExact(
             AlarmManager.RTC_WAKEUP,
-            System.currentTimeMillis() + 3000,
+            System.currentTimeMillis() , //TODO don't forget about this
             alarmPendingIntent
         )
     }
@@ -41,7 +41,7 @@ object AlarmScheduler {
     fun unschedule(context: Context, alarm: Alarm) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, MyReceiver::class.java).apply {
-            action = alarm.id.toString()
+            action = alarm.id
         }
         val alarmPendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         alarmManager.cancel(alarmPendingIntent)

@@ -34,7 +34,7 @@ import java.util.*
 @Composable
 fun AlarmScreen(
     onNewAlarmClick: () -> Unit,
-    editAlarmClick: (Int) -> Unit,
+    editAlarmClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     innerPadding: PaddingValues,
     viewModel: AlarmViewModel = viewModel(factory = AppViewModelProvider.Factory)
@@ -105,7 +105,7 @@ fun AlarmScreen(
 @Composable
 private fun AlarmCard(
     alarmItem: AlarmItem,
-    editAlarmClick: (Int) -> Unit,
+    editAlarmClick: (String) -> Unit,
     updateAlarm: (Alarm) -> Unit
 ) {
     val checked = alarmItem.alarm.enabled

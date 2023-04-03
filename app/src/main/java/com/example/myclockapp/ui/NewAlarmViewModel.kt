@@ -30,17 +30,18 @@ class NewAlarmViewModel(
     savedStateHandle: SavedStateHandle,
     private val alarmRepository: AlarmRepository
 ) : ViewModel() {
-    private val alarmId: Int = checkNotNull(savedStateHandle["alarmId"])
-    var isNewAlarm: Boolean = true
+    private val alarmId: String = checkNotNull(savedStateHandle["alarmId"])
+    var isNewAlarm = alarmId == "-1"
 
     private val _uiState: MutableStateFlow<AlarmUiState>
     val uiState: StateFlow<AlarmUiState>
 
     init {
-        viewModelScope.launch {
-            val alarm = alarmRepository.getItem(alarmId)
-            if (alarm != null) updateAlarmUiState(alarm)
-            isNewAlarm = alarm == null
+        if (!isNewAlarm) {
+            viewModelScope.launch {
+                val alarm = alarmRepository.getItem(alarmId)
+                updateAlarmUiState(alarm)
+            }
         }
 
         _uiState = MutableStateFlow(AlarmUiState())
@@ -118,7 +119,7 @@ class NewAlarmViewModel(
             name = _uiState.value.name
         )
 
-        //TODO figure out id, probably generate it myself
+        //TODO if alarm goes off before it is inserted it will cause crash
         AlarmScheduler.schedule(context, alarm)
 
         viewModelScope.launch {

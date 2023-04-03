@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.example.myclockapp.ui.NotificationDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
@@ -18,16 +18,14 @@ class MyReceiver : BroadcastReceiver() {
             Log.d("MyReceiver", "ACTION_BOOT_COMPLETED")
 
 
-        }
-        else {
+        } else {
             goAsync {
-                Log.d("MyReceiver", "I'm working in thread ${Thread.currentThread().name}")
-
                 val repo = app.container.alarmRepository
-                val alarm = repo.getItem(intent.action?.toInt()!!)
+                val alarm = repo.getItem(intent.action!!) //TODO add better update method
                 repo.updateItem(alarm.copy(enabled = false))
             }
             Log.d("MyReceiver", "Alarm!!!")
+            NotificationDispatcher.fireAlarmNotification(context)
         }
     }
 
@@ -35,7 +33,7 @@ class MyReceiver : BroadcastReceiver() {
         block: suspend CoroutineScope.() -> Unit
     ) {
         val pendingResult = goAsync()
-        CoroutineScope(SupervisorJob()).launch(Dispatchers.Default) {
+        CoroutineScope(SupervisorJob()).launch {
             try {
                 block()
             } finally {

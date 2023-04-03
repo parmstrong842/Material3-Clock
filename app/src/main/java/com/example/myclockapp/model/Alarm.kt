@@ -2,12 +2,13 @@ package com.example.myclockapp.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.*
 
 
 @Entity(tableName = "alarms")
 data class Alarm(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    @PrimaryKey
+    val id: String = UUID.randomUUID().toString(),
     val enabled: Boolean = false,
     val time: String = "6:00AM",
     val hour: Int = 0,

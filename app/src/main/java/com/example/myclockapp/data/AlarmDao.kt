@@ -11,7 +11,7 @@ interface AlarmDao {
     fun getAllItems(): Flow<List<Alarm>>
 
     @Query("SELECT * from alarms WHERE id = :id")
-    suspend fun getItem(id: Int): Alarm
+    suspend fun getItem(id: String): Alarm
 
     // Specify the conflict strategy as IGNORE, when the user tries to add an
     // existing Item into the database Room ignores the conflict.

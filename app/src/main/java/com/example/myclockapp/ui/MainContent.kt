@@ -77,7 +77,7 @@ fun MainContent() {
             composable(
                 route = "${Screen.NewAlarm.name}/{alarmId}",
                 arguments = listOf(navArgument("alarmId") {
-                    type = NavType.IntType
+                    type = NavType.StringType
                 })
             ) {
                 NewAlarmScreen(

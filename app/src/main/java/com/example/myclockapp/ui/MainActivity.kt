@@ -1,4 +1,4 @@
-package com.example.myclockapp
+package com.example.myclockapp.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.myclockapp.ui.MainContent
 import com.example.myclockapp.ui.theme.MyClockAppTheme
 
 class MainActivity : ComponentActivity() {

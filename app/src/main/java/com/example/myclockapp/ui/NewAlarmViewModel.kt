@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 data class AlarmUiState(
     val time: String = "6:00AM",
-    val name: String = "---",
+    val name: String = "",
     val sunSelected: Boolean = false,
     val monSelected: Boolean = false,
     val tueSelected: Boolean = false,

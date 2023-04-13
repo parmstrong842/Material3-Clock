@@ -6,8 +6,6 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.myclockapp.data.AlarmRepository
-import com.example.myclockapp.data.StartScreenState
 import com.example.myclockapp.ui.AlarmViewModel
 import com.example.myclockapp.ui.MainContentViewModel
 import com.example.myclockapp.ui.NewAlarmViewModel

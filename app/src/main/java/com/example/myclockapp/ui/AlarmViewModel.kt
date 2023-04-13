@@ -2,7 +2,6 @@ package com.example.myclockapp.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myclockapp.data.AlarmDao
 import com.example.myclockapp.data.AlarmRepository
 import com.example.myclockapp.model.Alarm
 import kotlinx.coroutines.flow.*

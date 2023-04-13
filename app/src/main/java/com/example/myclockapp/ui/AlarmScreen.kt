@@ -1,11 +1,14 @@
 package com.example.myclockapp.ui
 
 
-import android.app.AlarmManager
-import android.app.PendingIntent
+import android.Manifest
 import android.content.Context
-import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,15 +25,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myclockapp.AlarmScheduler
 import com.example.myclockapp.AppViewModelProvider
-import com.example.myclockapp.MyReceiver
 import com.example.myclockapp.model.Alarm
-import kotlinx.coroutines.launch
 import java.util.*
 
-
+//TODO if alarm is snoozing and I update that alarm I need to disable the snooze alarm
+//TODO missed alarm notification
 @Composable
 fun AlarmScreen(
     onNewAlarmClick: () -> Unit,
@@ -39,6 +42,11 @@ fun AlarmScreen(
     innerPadding: PaddingValues,
     viewModel: AlarmViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+
+    val context = LocalContext.current
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        CheckPermissions(context)
+    }
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -155,6 +163,38 @@ private fun AlarmCard(
                     modifier = Modifier
                         .padding(end = 16.dp)
                 )
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun CheckPermissions(context: Context) {
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission Accepted: Do something
+            Log.d("MainContent","PERMISSION GRANTED")
+
+        } else {
+            // Permission Denied: Do something
+            Log.d("MainContent","PERMISSION DENIED")
+        }
+    }
+
+    when (PackageManager.PERMISSION_GRANTED) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) -> {
+            // Some works that require permission
+            //Log.d("MainContent","has POST_NOTIFICATION permission")
+        }
+        else -> {
+            SideEffect {
+                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }

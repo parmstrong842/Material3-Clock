@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">MyClockApp</string>
+    <string name="extra_name">com.example.myclockapp.name</string>
+    <string name="extra_time">com.example.myclockapp.time</string>
+    <string name="alarm_notification_channel">AlarmNotification</string>
+    <string name="action_dismiss">com.example.myclockapp.dismiss</string>
+    <string name="action_snooze">com.example.myclockapp.snooze</string>
+    <string name="alarm_id">com.example.myclockapp.alarmId</string>
 </resources>
